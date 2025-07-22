@@ -115,7 +115,7 @@ export function insertLoadingSpinner(
 ): HTMLElement {
   const spinner = document.createElement("span");
   spinner.className = "fluent-read-loading";
-  if (isCache) spinner.style.borderTop = "3px solid green"; // 存在缓存时改为绿色
+  // 统一使用默认样式以保持简洁
   node.appendChild(spinner);
   return spinner;
 }

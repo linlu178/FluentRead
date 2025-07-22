@@ -80,14 +80,11 @@ export function autoTranslateEnglishPage() {
     if (isAutoTranslating) return;
 
     // 确定翻译的根节点，优先使用<article>，其次是<main>，以提高翻译精度
-    let rootNode: HTMLElement = document.body;
-    const articleElement = document.querySelector('article');
-    const mainElement = document.querySelector('main');
+    let rootNodes: NodeListOf<HTMLElement> | HTMLElement[] = document.querySelectorAll('article');
 
-    if (articleElement) {
-        rootNode = articleElement;
-    } else if (mainElement) {
-        rootNode = mainElement;
+    // 如果没有article，则使用body
+    if (rootNodes.length === 0) {
+        rootNodes = [document.body];
     }
     
     // 获取当前页面的语言（暂时注释，存在识别问题）
@@ -103,7 +100,11 @@ export function autoTranslateEnglishPage() {
     // console.log('当前页面非目标语言，开始翻译');
 
     // 获取所有需要翻译的节点
-    const nodes = grabAllNode(rootNode);
+    let nodes: Element[] = [];
+    rootNodes.forEach(rootNode => {
+        nodes.push(...grabAllNode(rootNode));
+    });
+
     if (!nodes.length) return;
 
     isAutoTranslating = true;

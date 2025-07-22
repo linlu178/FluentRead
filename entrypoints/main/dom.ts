@@ -24,79 +24,50 @@ export const inlineSet = new Set([
 
 // 传入父节点，返回所有需要翻译的 DOM 元素数组
 export function grabAllNode(rootNode: Node): Element[] {
-    if (!rootNode) return [];
+    if (!rootNode || !(rootNode instanceof Element)) return [];
 
-    const result: Element[] = [];
+    // 1. 定义可以作为独立翻译单元的块级标签
+    const blockTags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'dd', 'blockquote', 'figcaption', 'div', 'article', 'section', 'main', 'aside'];
+    const selector = blockTags.join(',');
 
-    const walker = document.createTreeWalker(
-        rootNode,
-        NodeFilter.SHOW_ELEMENT,
-        {
-            acceptNode: (node: Node): number => {
-                if (!(node instanceof Element)) return NodeFilter.FILTER_SKIP;
+    // 2. 获取所有潜在的翻译单元
+    const allNodes = Array.from(rootNode.querySelectorAll(selector));
 
-                const tag = node.tagName.toLowerCase();
+    const translatableNodes: Element[] = [];
 
-                // 跳过黑名单标签
-                if (skipSet.has(tag) ||
-                    node.classList?.contains('sr-only') ||
-                    node.classList?.contains('notranslate')) {
-                    return NodeFilter.FILTER_REJECT;
-                }
-
-                // 在初始全局翻译时 跳过header与footer
-                if (tag === 'header' || tag === 'footer') {
-                    return NodeFilter.FILTER_REJECT;
-                }
-
-                // 检查是否只包含有效文本内容
-                let hasText = false;
-                let hasElement = false;
-                let hasNonEmptyElement = false;
-
-                for (const child of node.childNodes) {
-                    if (child.nodeType === Node.ELEMENT_NODE) {
-                        hasElement = true;
-                        // 检查子元素是否包含文本
-                        if (child.textContent?.trim()) {
-                            hasNonEmptyElement = true;
-                        }
-                    }
-                    if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
-                        hasText = true;
-                    }
-                }
-
-                // 如果有非空子元素，跳过当前节点
-                if (hasNonEmptyElement) {
-                    return NodeFilter.FILTER_SKIP;
-                }
-
-                if (hasText && !hasElement) {
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-
-                // 如果有子元素，继续遍历
-                if (node.childNodes.length > 0) {
-                    return NodeFilter.FILTER_SKIP;
-                }
-
-                return NodeFilter.FILTER_REJECT;
-            }
+    // 3. 过滤和筛选这些节点
+    for (const node of allNodes) {
+        // a. 跳过黑名单标签的直接子元素
+        if (skipSet.has(node.tagName.toLowerCase())) {
+            continue;
         }
-    );
 
-    // 遍历出所有可翻译的节点
-    let currentNode: Node | null;
-    while (currentNode = walker.nextNode()) {
-        const translateNode = grabNode(currentNode as Element);
-        if (translateNode) {
-            result.push(translateNode);
-            // 跳过已确定要翻译的节点的所有子节点
-            walker.currentNode = currentNode.nextSibling || currentNode;
+        // b. 跳过不可见的元素
+        const style = window.getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden') {
+            continue;
         }
+
+        // c. 跳过内部包含其他块级翻译单元的节点，避免重复翻译
+        // 例如，如果一个 div 内部有 p，我们只翻译 p，不翻译这个 div
+        if (node.querySelector(selector)) {
+            continue;
+        }
+        
+        // d. 跳过只包含空白字符的节点
+        if (!node.textContent?.trim()) {
+            continue;
+        }
+
+        // e. 跳过代码块和格式化文本
+        if (node.closest('pre, code')) {
+            continue;
+        }
+
+        translatableNodes.push(node);
     }
-    return Array.from(new Set(result));;
+
+    return translatableNodes;
 }
 
 // 返回最终应该翻译的父节点或 false

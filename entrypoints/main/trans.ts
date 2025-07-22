@@ -78,6 +78,17 @@ export function restoreOriginalContent() {
 export function autoTranslateEnglishPage() {
     // 如果已经在翻译中，则返回
     if (isAutoTranslating) return;
+
+    // 确定翻译的根节点，优先使用<article>，其次是<main>，以提高翻译精度
+    let rootNode: HTMLElement = document.body;
+    const articleElement = document.querySelector('article');
+    const mainElement = document.querySelector('main');
+
+    if (articleElement) {
+        rootNode = articleElement;
+    } else if (mainElement) {
+        rootNode = mainElement;
+    }
     
     // 获取当前页面的语言（暂时注释，存在识别问题）
     // const text = document.documentElement.innerText || '';
@@ -92,7 +103,7 @@ export function autoTranslateEnglishPage() {
     // console.log('当前页面非目标语言，开始翻译');
 
     // 获取所有需要翻译的节点
-    const nodes = grabAllNode(document.body);
+    const nodes = grabAllNode(rootNode);
     if (!nodes.length) return;
 
     isAutoTranslating = true;
@@ -105,6 +116,13 @@ export function autoTranslateEnglishPage() {
 
                 // 去重
                 if (node.hasAttribute(TRANSLATED_ATTR)) return;
+
+                // 新增：过短内容不翻译
+                const textContent = (node as HTMLElement).innerText?.trim() || '';
+                if (textContent.length < 10) {
+                    observer.unobserve(node); // 停止观察，避免重复检查
+                    return;
+                }
                 
                 // 为节点分配唯一ID
                 const nodeId = `fr-node-${nodeIdCounter++}`;

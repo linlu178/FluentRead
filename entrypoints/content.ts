@@ -288,14 +288,14 @@ function setupFloatingBallHotkey() {
                                 (hotkeyParts.includes('shift') || !hotkeysPressed.has('shift'));
         
         // 如果按键组合匹配配置的快捷键，且没有额外的修饰键
-        if (allKeysPressed && noExtraModifiers && !config.disableFloatingBall) {
+        if (allKeysPressed && noExtraModifiers) {
             // 防止事件继续传播和默认行为
             event.preventDefault();
             event.stopPropagation();
-            
+
             // 通过自定义事件来触发翻译
             document.dispatchEvent(new CustomEvent('fluentread-toggle-translation'));
-            
+
             if (isDev) {
                 console.log('[FluentRead] 触发悬浮球翻译');
             }

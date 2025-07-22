@@ -4,7 +4,7 @@
 }
 .fluent-read-loading {
     border: 3px solid #f3f3f3; /* 轨迹灰色 */
-    border-top: 3px solid blue;   /* 主色调，首次翻译蓝色、缓存应改为绿色 */
+    border-top: 3px solid #999;   /* 中性配色，保持简洁 */
     border-radius: 50%;
     width: 12px;
     height: 12px;

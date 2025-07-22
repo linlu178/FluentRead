@@ -23,6 +23,19 @@ export default defineContentScript({
         // 添加自动翻译事件监听器
         if (config.autoTranslate) autoTranslationEvent();
 
+        // 当悬浮球禁用时，通过快捷键也能触发翻译
+        let isFullPageTranslated = false;
+        document.addEventListener('fluentread-toggle-translation', () => {
+            if (config.disableFloatingBall) {
+                isFullPageTranslated = !isFullPageTranslated;
+                if (isFullPageTranslated) {
+                    autoTranslateEnglishPage();
+                } else {
+                    restoreOriginalContent();
+                }
+            }
+        });
+
         // 挂载悬浮球（如果配置未禁用）
         if (config.disableFloatingBall !== true) {
             // 使用配置中的位置
